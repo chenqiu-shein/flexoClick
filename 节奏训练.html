@@ -119,12 +119,14 @@
         onoff() {
           let self = this
           self.isRun = !self.isRun
-          if (self.isRun) {
-            this.runAnswerTimer()
-          } else {
-            clearInterval(self.answerTimer)
-            clearInterval(self.stepTimer)
-          }
+          document.getElementById("audio-chidp").currentTime = 0;
+          document.getElementById("audio-chidp").play();
+          // if (self.isRun) {
+          //   this.runAnswerTimer()
+          // } else {
+          //   clearInterval(self.answerTimer)
+          //   clearInterval(self.stepTimer)
+          // }
         },
         runAnswerTimer() {
           var self = this
