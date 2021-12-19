@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>JS Bin</title>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.5.17/vue.js"></script>
+  <!-- 引入样式 -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.3/theme-chalk/index.min.css" rel="stylesheet">
+  <!-- 引入组件库 -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.3/index.js"></script>
+
+  <style>
+    .input-wrap {
+      width: 500px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    .input-title {
+      flex: 0 0 30%;
+      margin-bottom: 10px;
+    }
+    .input-i {
+      flex: 0 0 70%;
+      margin-bottom: 10px;
+      line-height: 38px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <audio 
+      id="audio-chid" 
+      src="./节奏训练-chid.mp3" 
+      preload="preload" 
+    >
+    </audio>
+    <audio 
+      id="audio-chidp" 
+      src="./节奏训练-chidp.mp3" 
+      preload="preload" 
+    >
+    </audio>
+    <audio 
+      id="audio-p" 
+      src="./节奏训练-p.mp3" 
+      preload="preload" 
+    >
+    </audio>
+
+    <div class="input-wrap">
+      <div class="input-title">速度</div>
+      <el-input-number 
+        class="input-i"
+        v-model="speed" 
+        :min="30" 
+        :max="300" 
+        label="速度"
+      >  
+      </el-input-number>
+
+      <div class="input-title">分拍</div>
+      <el-input-number 
+        class="input-i"
+        v-model="step" 
+        :min="3" 
+        :max="4" 
+        label="分拍"
+      >  
+      </el-input-number>
+
+      <div class="input-title">组合</div>
+      <div class="input-i">
+        <el-radio v-model="combineMode" label="1">1111</el-radio>
+        <el-radio v-model="combineMode" label="2">1212</el-radio>
+        <el-radio v-model="combineMode" label="3">1221</el-radio>
+        <el-radio v-model="combineMode" label="4">1234</el-radio> 
+      </div>
+      
+
+
+      <!-- <div class="input-title">呼应小节数</div>
+      <el-input-number 
+        class="input-i"
+        v-model="period" 
+        :min="1" 
+        :max="2" 
+        label="呼应小节数"
+      >  
+      </el-input-number> -->
+    </div>
+
+    <el-button @click="onoff">
+      {{ isRun ? 'STOP' : 'START' }}
+    </el-button>
+  </div>
+</body>
+<script>
+    new Vue({
+      el: '#app',
+      data: function() {
+        return { 
+          answerTimer: null,
+          stepTimmer: null,
+          isRun: false,
+          beat: 4,   // 拍数
+
+          speed: 60, // 速度
+          step: 4,   // 分拍 (16分音符)
+          period: 1, // 呼应小节数
+
+          combineMode: '1',
+        }
+      },
+      methods: {
+        onoff() {
+          let self = this
+          self.isRun = !self.isRun
+          if (self.isRun) {
+            this.runAnswerTimer()
+          } else {
+            clearInterval(self.answerTimer)
+            clearInterval(self.stepTimer)
+          }
+        },
+        runAnswerTimer() {
+          var self = this
+          var answerStepArr = self.initStepArr('answer')
+          self.answerTimer = setInterval(function() {
+            var answer = answerStepArr.shift();
+            if (!((answerStepArr.length + 1)%self.step)) {
+              console.log('answer chid')
+              document.getElementById("audio-chid").currentTime = 0;
+              document.getElementById("audio-chid").play();
+            } else if (answerStepArr.length != 0) {
+              console.log('answer empty')
+            } else if (answerStepArr.length == 0) {
+              console.log('answer empty')
+              clearInterval(self.answerTimer)
+              self.runStepTimer()
+            }
+          }, 60 * 1000 / self.speed / self.step)
+        },
+        runStepTimer() {
+          var self = this
+          var stepArr = self.initStepArr()
+          self.stepTimer = setInterval(function() {
+            var answer = stepArr.shift();
+            if (!((stepArr.length + 1)%self.step)) {
+              if (answer) {
+                console.log('step chidp')
+                document.getElementById("audio-chidp").currentTime = 0;
+                document.getElementById("audio-chidp").play();
+              } else {
+                console.log('step chid')
+                document.getElementById("audio-chid").currentTime = 0;
+                document.getElementById("audio-chid").play();
+              }
+            } else if (stepArr.length != 0) {
+              if (answer) {
+                console.log('step p')
+                document.getElementById("audio-p").currentTime = 0;
+                document.getElementById("audio-p").play();
+              } else {
+                console.log('step empty')
+              }
+            } else if (stepArr.length == 0) {
+              if (answer) {
+                console.log('step p')
+                document.getElementById("audio-p").currentTime = 0;
+                document.getElementById("audio-p").play();
+              } else {
+                console.log('step empty')
+              }
+              clearInterval(self.stepTimer)
+              self.runAnswerTimer()
+            }
+          }, 60 * 1000 / self.speed / self.step)
+        },
+        initStepArr(answer) {
+          var arr1 = []
+          for (var i = this.step - 1; i >= 0; i--) {
+            if (answer) {
+              arr1.push(0)
+            } else {
+              arr1.push(Math.round(Math.random()))
+            }
+          }
+
+          if (this.combineMode == 2 || this.combineMode == 3) {
+            var arr2 = []
+            for (var i = this.step - 1; i >= 0; i--) {
+              if (answer) {
+                arr2.push(0)
+              } else {
+                arr2.push(Math.round(Math.random()))
+              }
+            }
+          }
+
+          // 1111
+          // 1212
+          // 1221
+          // 1234
+          
+          var copy = []
+          for (var i = 0; i < this.beat; i++) {
+            if (this.combineMode == 1) {
+              copy = copy.concat(arr1)
+            } else if (this.combineMode == 2) {
+              if (i == 0 || i == 2) {
+                copy = copy.concat(arr1)
+              } else {
+                copy = copy.concat(arr2)
+              }
+            } else if (this.combineMode == 3) {
+              if (i == 0 || i == 3) {
+                copy = copy.concat(arr1)
+              } else {
+                copy = copy.concat(arr2)
+              }
+            }
+          }
+          console.log(copy)
+          return copy
+        }
+      }
+    })
+  </script>
+</html>
